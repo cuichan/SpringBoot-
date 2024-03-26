@@ -1,0 +1,102 @@
+<template>
+    <ContentField>
+        <div class="row justify-content-md-center">
+            <div class="col-3">
+                <form @submit.prevent="register">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">用戶名</label>
+                        <input v-model="username" type="text" class="form-control" id="username" placeholder="用戶名">
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">密码</label>
+                        <input v-model="password" type="password" class="form-control" id="password" placeholder="密码">
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirmedPassword" class="form-label">确认密码</label>
+                        <input v-model="confirmedPassword" type="password" class="form-control" id="confirmedPassword" placeholder="请再次输入密码">
+                    </div>
+                    <div class="error-message">{{ error_message }}</div>
+                    <button type="submit" class="btn btn-primary">提交</button>
+                </form>
+            </div>
+        </div>
+    </ContentField>
+</template>
+
+<script>
+
+
+import ContentField from "../../../components/ContentField.vue";
+import {ref } from 'vue';
+import { useStore } from 'vuex';
+import router from '../../../router/index';
+import $ from 'jquery';
+
+
+export default ({
+    components: {
+        ContentField,
+    },
+    setup() {
+        // const store = useStore();
+        let username = ref('');
+        let password = ref('');
+        let confirmedPassword = ref('');
+        let error_message = ref('');
+
+        const store = useStore();
+        const register = () => {
+            $.ajax({
+                url: "https://app2652.acapp.acwing.com.cn/api/user/account/register/",
+                type: "post",
+                data: {
+                    username: username.value,
+                    password: password.value,
+                    confirmedPassword: confirmedPassword.value,
+                },
+                success(resp) {
+                    // 成功直接返回登录界面
+                    if (resp.error_message === "success") {
+                        // router.push({name: "user_account_login"});
+                        store.dispatch("login",{
+                            username: username.value,
+                            password: password.value,
+                        success(){
+                            store.dispatch('getinfo',{
+                                success(){
+                                    router.push({ name: 'home' })
+                                    console.log(store.state.user);
+                                }
+                            })
+                        },
+                        error(){
+                            error_message.value= "用户名或者密码错误";
+                        }
+                    })
+                } else {
+                        error_message.value = resp.error_message;
+                    }
+                },
+              });
+        }
+
+        return {
+            username,
+            password,
+            confirmedPassword,
+            error_message,
+            register,
+        }
+    },
+})
+</script>
+
+<style scoped>
+button {
+    width: 100%;
+}
+div.error-message {
+    color: red;
+    justify-content: center;
+}
+</style>
